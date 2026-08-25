@@ -1,0 +1,31 @@
+{
+  "customers": {
+    "initial_rows": 3500,
+    "final_rows": 3500,
+    "duplicates_removed": 0,
+    "null_regions_imputed": 28,
+    "imputation_strategy": "Mode imputation ('East')"
+  },
+  "products": {
+    "initial_rows": 20,
+    "final_rows": 20,
+    "categories_standardized": 5,
+    "avg_base_margin_pct": 59.57
+  },
+  "sales": {
+    "initial_rows": 75423,
+    "final_rows": 74782,
+    "duplicates_removed": 598,
+    "invalid_records_removed": 43,
+    "missing_customer_ids_imputed": 746,
+    "missing_discounts_imputed": 900,
+    "total_clean_revenue": 10014259.47,
+    "total_clean_profit": 5488213.47,
+    "overall_profit_margin_pct": 54.8
+  },
+  "pricing_history": {
+    "initial_rows": 14620,
+    "final_rows": 14620
+  },
+  "summary": {}
+}

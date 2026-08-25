@@ -1,0 +1,120 @@
+/* RetailX Executive Analytics Dashboard Styling */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Metric Cards */
+.metric-card {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 16px 20px;
+    color: #f8fafc;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    border-color: #3b82f6;
+}
+
+.metric-title {
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+
+.metric-value {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.metric-sub {
+    font-size: 0.78rem;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+.metric-pos {
+    color: #10b981;
+}
+
+.metric-neg {
+    color: #ef4444;
+}
+
+.metric-neutral {
+    color: #60a5fa;
+}
+
+/* Section Header Badges */
+.section-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: #1e3a8a;
+    color: #93c5fd;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Recommendation Badges */
+.badge-increase {
+    background-color: #065f46;
+    color: #a7f3d0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.badge-decrease {
+    background-color: #991b1b;
+    color: #fecaca;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.badge-maintain {
+    background-color: #374151;
+    color: #e5e7eb;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.badge-discount {
+    background-color: #92400e;
+    color: #fde68a;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+/* Code Snippets */
+pre, code {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* Clean up Streamlit default containers */
+div.block-container {
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+    max-width: 95%;
+}
