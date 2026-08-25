@@ -81,7 +81,29 @@ def compute_monthly_trends(df_sales: pd.DataFrame) -> pd.DataFrame:
 
 def compute_category_summary(df_sales: pd.DataFrame, df_products: pd.DataFrame) -> pd.DataFrame:
     """Aggregate category-level sales, margins, and contribution shares."""
-    merged = df_sales.merge(df_products[["product_id", "category"]], on="product_id", how="left")
+    # Ensure category is available without introducing colliding suffix columns
+    if "category" in df_sales.columns:
+        merged = df_sales.copy()
+    else:
+        if "product_id" not in df_sales.columns:
+            raise KeyError(f"'product_id' is required in df_sales to resolve category. Available columns: {list(df_sales.columns)}")
+        if "product_id" not in df_products.columns or "category" not in df_products.columns:
+            raise KeyError(f"df_products must contain 'product_id' and 'category'. Available columns: {list(df_products.columns)}")
+        merged = df_sales.merge(df_products[["product_id", "category"]], on="product_id", how="left")
+
+    # Data Validation
+    required_cols = ["category", "transaction_id", "quantity", "revenue", "cost", "profit"]
+    missing_cols = [c for c in required_cols if c not in merged.columns]
+    if missing_cols:
+        raise KeyError(f"Missing required column(s) {missing_cols} for category summary. Available columns: {list(merged.columns)}")
+
+    if merged.empty:
+        return pd.DataFrame(columns=[
+            "category", "total_orders", "total_units", "total_revenue",
+            "total_cost", "total_profit", "profit_margin_pct", "asp",
+            "revenue_share_pct", "profit_share_pct"
+        ])
+
     cat_df = merged.groupby("category").agg(
         total_orders=("transaction_id", "count"),
         total_units=("quantity", "sum"),
@@ -89,40 +111,76 @@ def compute_category_summary(df_sales: pd.DataFrame, df_products: pd.DataFrame) 
         total_cost=("cost", "sum"),
         total_profit=("profit", "sum")
     ).reset_index()
-    
+
     grand_rev = cat_df["total_revenue"].sum()
     grand_prof = cat_df["total_profit"].sum()
-    
-    cat_df["profit_margin_pct"] = ((cat_df["total_profit"] / cat_df["total_revenue"]) * 100.0).round(2)
-    cat_df["asp"] = (cat_df["total_revenue"] / cat_df["total_units"]).round(2)
-    cat_df["revenue_share_pct"] = ((cat_df["total_revenue"] / grand_rev) * 100.0).round(2)
-    cat_df["profit_share_pct"] = ((cat_df["total_profit"] / grand_prof) * 100.0).round(2)
-    
+
+    cat_df["profit_margin_pct"] = np.where(cat_df["total_revenue"] > 0, ((cat_df["total_profit"] / cat_df["total_revenue"]) * 100.0).round(2), 0.0)
+    cat_df["asp"] = np.where(cat_df["total_units"] > 0, (cat_df["total_revenue"] / cat_df["total_units"]).round(2), 0.0)
+    cat_df["revenue_share_pct"] = np.where(grand_rev > 0, ((cat_df["total_revenue"] / grand_rev) * 100.0).round(2), 0.0)
+    cat_df["profit_share_pct"] = np.where(grand_prof > 0, ((cat_df["total_profit"] / grand_prof) * 100.0).round(2), 0.0)
+
     return cat_df.sort_values(by="total_revenue", ascending=False)
 
 
 def compute_regional_breakdown(df_sales: pd.DataFrame) -> pd.DataFrame:
     """Aggregate regional sales and profit margin metrics."""
+    if "region" not in df_sales.columns:
+        raise KeyError(f"'region' column is required in df_sales. Available columns: {list(df_sales.columns)}")
+
+    required_cols = ["region", "transaction_id", "quantity", "revenue", "profit"]
+    missing_cols = [c for c in required_cols if c not in df_sales.columns]
+    if missing_cols:
+        raise KeyError(f"Missing required column(s) {missing_cols} for regional breakdown. Available columns: {list(df_sales.columns)}")
+
+    if df_sales.empty:
+        return pd.DataFrame(columns=[
+            "region", "total_orders", "total_units", "total_revenue",
+            "total_profit", "profit_margin_pct", "asp", "revenue_share_pct"
+        ])
+
     reg_df = df_sales.groupby("region").agg(
         total_orders=("transaction_id", "count"),
         total_units=("quantity", "sum"),
         total_revenue=("revenue", "sum"),
         total_profit=("profit", "sum")
     ).reset_index()
-    
+
     grand_rev = reg_df["total_revenue"].sum()
-    reg_df["profit_margin_pct"] = ((reg_df["total_profit"] / reg_df["total_revenue"]) * 100.0).round(2)
-    reg_df["asp"] = (reg_df["total_revenue"] / reg_df["total_units"]).round(2)
-    reg_df["revenue_share_pct"] = ((reg_df["total_revenue"] / grand_rev) * 100.0).round(2)
-    
+    reg_df["profit_margin_pct"] = np.where(reg_df["total_revenue"] > 0, ((reg_df["total_profit"] / reg_df["total_revenue"]) * 100.0).round(2), 0.0)
+    reg_df["asp"] = np.where(reg_df["total_units"] > 0, (reg_df["total_revenue"] / reg_df["total_units"]).round(2), 0.0)
+    reg_df["revenue_share_pct"] = np.where(grand_rev > 0, ((reg_df["total_revenue"] / grand_rev) * 100.0).round(2), 0.0)
+
     return reg_df.sort_values(by="total_revenue", ascending=False)
 
 
 def compute_customer_segment_analysis(df_sales: pd.DataFrame, df_customers: pd.DataFrame) -> pd.DataFrame:
     """Analyze purchasing behavior and profitability by customer segment."""
-    merged = df_sales.merge(df_customers[["customer_id", "customer_segment"]], on="customer_id", how="left")
+    # Ensure customer_segment is available without introducing colliding suffix columns
+    if "customer_segment" in df_sales.columns:
+        merged = df_sales.copy()
+    else:
+        if "customer_id" not in df_sales.columns:
+            raise KeyError(f"'customer_id' is required in df_sales to resolve customer segment. Available columns: {list(df_sales.columns)}")
+        if "customer_id" not in df_customers.columns or "customer_segment" not in df_customers.columns:
+            raise KeyError(f"df_customers must contain 'customer_id' and 'customer_segment'. Available columns: {list(df_customers.columns)}")
+        merged = df_sales.merge(df_customers[["customer_id", "customer_segment"]], on="customer_id", how="left")
+
     merged["customer_segment"] = merged["customer_segment"].fillna("Guest Shoppers")
-    
+
+    # Data Validation
+    required_cols = ["customer_segment", "customer_id", "transaction_id", "quantity", "revenue", "profit", "discount"]
+    missing_cols = [c for c in required_cols if c not in merged.columns]
+    if missing_cols:
+        raise KeyError(f"Missing required column(s) {missing_cols} for customer segment analysis. Available columns: {list(merged.columns)}")
+
+    if merged.empty:
+        return pd.DataFrame(columns=[
+            "customer_segment", "unique_customers", "total_orders", "total_units",
+            "total_revenue", "total_profit", "avg_discount_pct", "aov", "asp",
+            "margin_pct", "units_per_order"
+        ])
+
     seg_df = merged.groupby("customer_segment").agg(
         unique_customers=("customer_id", "nunique"),
         total_orders=("transaction_id", "count"),
@@ -131,12 +189,12 @@ def compute_customer_segment_analysis(df_sales: pd.DataFrame, df_customers: pd.D
         total_profit=("profit", "sum"),
         avg_discount_pct=("discount", lambda x: round(x.mean() * 100.0, 2))
     ).reset_index()
-    
-    seg_df["aov"] = (seg_df["total_revenue"] / seg_df["total_orders"]).round(2)
-    seg_df["asp"] = (seg_df["total_revenue"] / seg_df["total_units"]).round(2)
-    seg_df["margin_pct"] = ((seg_df["total_profit"] / seg_df["total_revenue"]) * 100.0).round(2)
-    seg_df["units_per_order"] = (seg_df["total_units"] / seg_df["total_orders"]).round(2)
-    
+
+    seg_df["aov"] = np.where(seg_df["total_orders"] > 0, (seg_df["total_revenue"] / seg_df["total_orders"]).round(2), 0.0)
+    seg_df["asp"] = np.where(seg_df["total_units"] > 0, (seg_df["total_revenue"] / seg_df["total_units"]).round(2), 0.0)
+    seg_df["margin_pct"] = np.where(seg_df["total_revenue"] > 0, ((seg_df["total_profit"] / seg_df["total_revenue"]) * 100.0).round(2), 0.0)
+    seg_df["units_per_order"] = np.where(seg_df["total_orders"] > 0, (seg_df["total_units"] / seg_df["total_orders"]).round(2), 0.0)
+
     return seg_df.sort_values(by="total_revenue", ascending=False)
 
 
